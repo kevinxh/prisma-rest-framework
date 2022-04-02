@@ -1,0 +1,23 @@
+{
+  "name": "prisma-rest-framework",
+  "version": "0.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "db:reset": "prisma migrate reset",
+    "db:migrate": "prisma migrate dev",
+    "db:studio": "prisma studio",
+    "db:start": "zsh ./db/start.sh"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/node": "^17.0.23",
+    "prisma": "^3.11.1",
+    "ts-node": "^10.7.0",
+    "typescript": "^4.6.3"
+  },
+  "dependencies": {
+    "@prisma/client": "^3.11.1"
+  }
+}
