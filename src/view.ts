@@ -11,4 +11,15 @@ const ListView = (client: PrismaClient, model: Lowercase<Prisma.ModelName>) => {
   };
 };
 
-export { View, ListView };
+const CreateView = (
+  client: PrismaClient,
+  model: Lowercase<Prisma.ModelName>
+) => {
+  return async (req: Request, res: Response) => {
+    // @ts-ignore
+    const instance = await client[model].create({ data: req.body });
+    res.json(instance);
+  };
+};
+
+export { View, ListView, CreateView };

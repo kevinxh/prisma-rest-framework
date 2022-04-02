@@ -15,8 +15,10 @@
   "author": "Kevin He",
   "license": "ISC",
   "devDependencies": {
+    "@types/body-parser": "^1.19.2",
     "@types/express": "^4.17.13",
     "@types/node": "^17.0.23",
+    "body-parser": "^1.19.2",
     "express": "^4.17.3",
     "nodemon": "^2.0.15",
     "prisma": "^3.11.1",

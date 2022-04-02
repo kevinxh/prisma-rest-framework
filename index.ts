@@ -1,18 +1,20 @@
 import { PrismaClient } from "@prisma/client";
 import express, { Express, Request, Response } from "express";
-import { ListView } from "./src/view";
+import { ListView, CreateView } from "./src/view";
 
 const prisma = new PrismaClient();
 
 const app: Express = express();
 const port = 3002;
 
+app.use(express.json());
+
 app.get("/", (req: Request, res: Response) => {
   res.send("⚡️ Prisma Server");
 });
 
 app.get("/users", ListView(prisma, "user"));
-app.get("/books", ListView(prisma, "book"));
+app.post("/users", CreateView(prisma, "user"));
 
 // app.get("/users", ListView(prisma.user));
 // app.post("/users", CreateView(prisma.user));
