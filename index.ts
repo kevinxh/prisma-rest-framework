@@ -1,6 +1,5 @@
-import { Prisma, PrismaClient } from "@prisma/client";
+import { PrismaClient } from "@prisma/client";
 import express, { Express, Request, Response } from "express";
-import { ListView, CreateView } from "./src/view";
 import { Model } from "./src/model";
 import PrismaRestFramework from "./src/client";
 
@@ -17,11 +16,10 @@ app.get("/", (req: Request, res: Response) => {
 });
 
 class User extends Model {
-  name = "User" as Prisma.ModelName;
   fields = ["name", "email"];
 }
 
-app.get("/users", PRF.ListView(new User("User", prisma)));
+app.get("/users", PRF.ListView(new User()));
 app.get("/books", PRF.ListView("Book"));
 // app.post("/users", CreateView(prisma, "user"));
 
@@ -34,18 +32,3 @@ app.get("/books", PRF.ListView("Book"));
 app.listen(port, () => {
   console.log(`⚡️[server]: Server is running at http://localhost:${port}`);
 });
-
-// const prisma = new PrismaClient();
-
-// async function main() {
-//   const allUsers = await prisma.user.findMany();
-//   console.log(allUsers);
-// }
-
-// main()
-//   .catch((e) => {
-//     throw e;
-//   })
-//   .finally(async () => {
-//     await prisma.$disconnect();
-//   });
