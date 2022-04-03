@@ -5,6 +5,7 @@
   "main": "index.js",
   "scripts": {
     "start": "nodemon index.ts",
+    "debug": "nodemon --exec \"node --inspect-brk -r ts-node/register index.ts\"",
     "lint": "ts-standard",
     "generate": "prisma generate",
     "db:reset": "prisma migrate reset",

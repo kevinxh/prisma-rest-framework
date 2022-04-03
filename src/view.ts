@@ -1,13 +1,18 @@
 import { Prisma, PrismaClient } from "@prisma/client";
 import express, { Express, Request, Response } from "express";
 import { listMixin } from "./mixins";
+import { Model } from "./model";
 
 class View {}
 
-const ListView = (client: PrismaClient, model: Lowercase<Prisma.ModelName>) => {
+const ListView = (model: Model, client: PrismaClient) => {
   return async (req: Request, res: Response) => {
     // @ts-ignore
-    res.json(await client[model].findMany());
+    const list = await client[model.key].findMany();
+    const filtered = list.map((instance: object) => model.filter(instance));
+    res.json(filtered);
+    // console.log(model.filter(result[0]));
+    // console.log(result);
   };
 };
 

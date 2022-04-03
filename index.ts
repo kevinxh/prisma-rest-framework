@@ -1,8 +1,11 @@
-import { PrismaClient } from "@prisma/client";
+import { Prisma, PrismaClient } from "@prisma/client";
 import express, { Express, Request, Response } from "express";
 import { ListView, CreateView } from "./src/view";
+import { Model } from "./src/model";
+import PrismaRestFramework from "./src/client";
 
 const prisma = new PrismaClient();
+const PRF = new PrismaRestFramework(prisma);
 
 const app: Express = express();
 const port = 3002;
@@ -13,8 +16,14 @@ app.get("/", (req: Request, res: Response) => {
   res.send("⚡️ Prisma Server");
 });
 
-app.get("/users", ListView(prisma, "user"));
-app.post("/users", CreateView(prisma, "user"));
+class User extends Model {
+  name = "User" as Prisma.ModelName;
+  fields = ["name", "email"];
+}
+
+app.get("/users", PRF.ListView(new User("User", prisma)));
+app.get("/books", PRF.ListView("Book"));
+// app.post("/users", CreateView(prisma, "user"));
 
 // app.get("/users", ListView(prisma.user));
 // app.post("/users", CreateView(prisma.user));
