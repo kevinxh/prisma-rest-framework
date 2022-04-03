@@ -20,6 +20,7 @@ class User extends Model {
 }
 
 app.get("/users", PRF.ListView(new User()));
+app.post("/users", PRF.CreateView(new User()));
 app.get("/books", PRF.ListView("Book"));
 // app.post("/users", CreateView(prisma, "user"));
 

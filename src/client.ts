@@ -1,5 +1,5 @@
 import { Prisma, PrismaClient } from "@prisma/client";
-import { ListView } from "./view";
+import { ListView, CreateView } from "./view";
 import { Model } from "./model";
 
 class PrismaRestFrameworkClient {
@@ -14,6 +14,13 @@ class PrismaRestFrameworkClient {
       return ListView(model, this.client);
     }
     return ListView(new Model(model), this.client);
+  }
+
+  CreateView(model: Prisma.ModelName | Model) {
+    if (model instanceof Model) {
+      return CreateView(model, this.client);
+    }
+    return CreateView(new Model(model), this.client);
   }
 }
 
