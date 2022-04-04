@@ -59,33 +59,4 @@ class CreateView extends View {
 interface CreateView extends CreateMixin {}
 applyMixins(CreateView, [CreateMixin]);
 
-// const ListView = (model: ModelSerializer, client: PrismaClient) => {
-//   return async (req: Request, res: Response) => {
-//     // @ts-ignore Every Prisma model has its own delegant type :(
-//     const list = await client[model.key].findMany();
-//     const filtered = list.map((instance: object) => model.filter(instance));
-//     res.json(filtered);
-//   };
-// };
-
-// const CreateView = (model: ModelSerializer, client: PrismaClient) => {
-//   return async (req: Request, res: Response) => {
-//     // @ts-ignore Every Prisma model has its own delegant type :(
-//     const instance = await client[model.key].create({ data: req.body });
-//     const filtered = model.filter(instance);
-//     res.status(201).json(filtered);
-//   };
-// };
-
-// const CreateView = (
-//   client: PrismaClient,
-//   model: Lowercase<Prisma.ModelName>
-// ) => {
-//   return async (req: Request, res: Response) => {
-//     // @ts-ignore
-//     const instance = await client[model].create({ data: req.body });
-//     res.json(instance);
-//   };
-// };
-
 export { View, ListView, CreateView };
