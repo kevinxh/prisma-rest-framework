@@ -19,8 +19,15 @@ app.get("/", (req: Request, res: Response) => {
 class UserSerializer extends ModelSerializer {
   name = "User" as Prisma.ModelName;
   fields = ["name", "email"];
-  validate = (instance: User) => {};
-  validate_email = (email: User["email"], instance: User) => {};
+  validate = (instance: User) => {
+    console.log("validate");
+    console.log(instance);
+  };
+  validate_email = (email: User["email"], instance: User) => {
+    console.log("validate_email");
+    console.log(email);
+    console.log(instance);
+  };
 }
 
 const userSerializer = new UserSerializer();

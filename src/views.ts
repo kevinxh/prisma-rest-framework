@@ -31,6 +31,7 @@ class ListMixin {
 interface CreateMixin extends View, WithPrismaInterface {}
 class CreateMixin {
   async create(req: Request, res: Response) {
+    this.serializer._validate(req.body);
     // @ts-ignore
     const instance = await this.prisma[this.serializer.key].create({
       data: req.body,
