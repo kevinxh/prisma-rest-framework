@@ -1,6 +1,6 @@
 import { Prisma, PrismaClient, User } from "@prisma/client";
 import express, { Express, Request, Response } from "express";
-import ModelSerializer from "./src/modelSerializer";
+import Model from "./src/model";
 import PrismaRestFrameworkClient from "./src/client";
 import { ListView, CreateView } from "./src/views";
 import { ValidationError } from "./src/errors";
@@ -17,21 +17,19 @@ app.get("/", (req: Request, res: Response) => {
   res.send("⚡️ Prisma Server");
 });
 
-class UserSerializer extends ModelSerializer {
+class UserModel extends Model {
   name = "User" as Prisma.ModelName;
   fields = ["name", "email"];
   validate = (instance: User) => {
-    throw new ValidationError("data is wrong!");
+    // throw new ValidationError("data is wrong!");
   };
   validate_email = (email: User["email"], instance: User) => {
-    throw new ValidationError("email is bad!");
+    // throw new ValidationError("email is bad!");
   };
 }
 
-const userSerializer = new UserSerializer();
-
-const userListView = new ListView(userSerializer);
-const userCreateView = new CreateView(userSerializer);
+const userListView = new ListView(UserModel);
+const userCreateView = new CreateView(UserModel);
 
 app.get("/users", userListView.get);
 app.post("/users", userCreateView.post);

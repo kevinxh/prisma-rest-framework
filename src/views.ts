@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import { WithPrismaInterface, PrismaMixin } from "./client";
-import ModelSerializer from "./modelSerializer";
+import Model from "./model";
 import { applyMixins } from "./utils";
 import { APIValidationError, APIInternalServerError } from "./errors";
 
@@ -28,10 +28,12 @@ const ErrorHandler = (target: any, propertyName: any, descriptor: any) => {
 
 interface View extends WithPrismaInterface {}
 class View {
-  serializer: ModelSerializer;
+  SerializerClass: typeof Model;
+  serializer: Model;
 
-  constructor(serializer: ModelSerializer) {
-    this.serializer = serializer;
+  constructor(Serializer: typeof Model) {
+    this.SerializerClass = Serializer;
+    this.serializer = new Serializer();
   }
 }
 applyMixins(View, [PrismaMixin]);
@@ -72,8 +74,8 @@ interface ListView extends ListMixin {}
 applyMixins(ListView, [ListMixin]);
 
 class CreateView extends View {
-  constructor(serializer: ModelSerializer) {
-    super(serializer);
+  constructor(Serializer: typeof Model) {
+    super(Serializer);
     this.post = this.post.bind(this);
   }
 

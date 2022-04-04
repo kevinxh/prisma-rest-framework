@@ -7,10 +7,10 @@ interface Dictionary<T> {
   [key: string]: T;
 }
 
-interface ModelSerializer extends WithPrismaInterface {}
+interface Model extends WithPrismaInterface {}
 
 @withPrisma
-class ModelSerializer {
+class Model {
   name: Prisma.ModelName | undefined;
   fields?: string[];
   validate?: (instace: any) => void;
@@ -95,4 +95,4 @@ class ModelSerializer {
   }
 }
 
-export default ModelSerializer;
+export default Model;
