@@ -1,9 +1,9 @@
 import { Prisma, PrismaClient, User } from "@prisma/client";
 import express, { Express, Request, Response } from "express";
-import Model from "./src/model";
-import PrismaRestFrameworkClient from "./src/client";
-import { ListView, CreateView } from "./src/views";
-import { ValidationError } from "./src/errors";
+import Model from "../src/model";
+import PrismaRestFrameworkClient from "../src/client";
+import { ListView, CreateView } from "../src/views";
+import { ValidationError } from "../src/errors";
 
 const prisma = new PrismaClient();
 PrismaRestFrameworkClient.init(prisma);
@@ -24,7 +24,7 @@ class UserModel extends Model {
     // throw new ValidationError("data is wrong!");
   };
   validate_email = (email: User["email"], instance: User) => {
-    // throw new ValidationError("email is bad!");
+    throw new ValidationError("email is bad!");
   };
 }
 
