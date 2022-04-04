@@ -3,6 +3,7 @@ import express, { Express, Request, Response } from "express";
 import ModelSerializer from "./src/modelSerializer";
 import PrismaRestFrameworkClient from "./src/client";
 import { ListView, CreateView } from "./src/views";
+import { ValidationError } from "./src/errors";
 
 const prisma = new PrismaClient();
 PrismaRestFrameworkClient.init(prisma);
@@ -20,13 +21,10 @@ class UserSerializer extends ModelSerializer {
   name = "User" as Prisma.ModelName;
   fields = ["name", "email"];
   validate = (instance: User) => {
-    console.log("validate");
-    console.log(instance);
+    throw new ValidationError("data is wrong!");
   };
   validate_email = (email: User["email"], instance: User) => {
-    console.log("validate_email");
-    console.log(email);
-    console.log(instance);
+    throw new ValidationError("email is bad!");
   };
 }
 
