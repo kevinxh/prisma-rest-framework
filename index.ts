@@ -1,10 +1,11 @@
-import { PrismaClient } from "@prisma/client";
+import { Prisma, PrismaClient, User } from "@prisma/client";
 import express, { Express, Request, Response } from "express";
-import { Model } from "./src/model";
-import PrismaRestFramework from "./src/client";
+import ModelSerializer from "./src/modelSerializer";
+import PrismaRestFrameworkClient from "./src/client";
+import { ListView, CreateView } from "./src/views";
 
 const prisma = new PrismaClient();
-const PRF = new PrismaRestFramework(prisma);
+PrismaRestFrameworkClient.init(prisma);
 
 const app: Express = express();
 const port = 3002;
@@ -15,13 +16,22 @@ app.get("/", (req: Request, res: Response) => {
   res.send("⚡️ Prisma Server");
 });
 
-class User extends Model {
+class UserSerializer extends ModelSerializer {
+  name = "User" as Prisma.ModelName;
   fields = ["name", "email"];
+  validate = (instance: User) => {};
+  validate_email = (email: User["email"], instance: User) => {};
 }
 
-app.get("/users", PRF.ListView(new User()));
-app.post("/users", PRF.CreateView(new User()));
-app.get("/books", PRF.ListView("Book"));
+const userSerializer = new UserSerializer();
+
+const userListView = new ListView(userSerializer);
+const userCreateView = new CreateView(userSerializer);
+
+app.get("/users", userListView.get);
+app.post("/users", userCreateView.post);
+// app.post("/users", PRF.CreateView(new User()));
+// app.get("/books", PRF.ListView("Book"));
 // app.post("/users", CreateView(prisma, "user"));
 
 // app.get("/users", ListView(prisma.user));
