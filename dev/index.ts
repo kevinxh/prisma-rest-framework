@@ -26,10 +26,6 @@ app.get("/", (req: Request, res: Response) => {
 class UserModel extends Model {
   name = "User" as Prisma.ModelName;
   fields = ["id", "name", "email"];
-
-  // required fields by default are those Prisma field that
-  // is not marked as optional (?) and do not have default
-  // you can also manually add required fields here
   requiredFields = ["name", "email"];
   validate = (instance: User) => {
     // throw new ValidationError("data is wrong!");
@@ -54,14 +50,6 @@ app.post("/users", userCreateView.post);
 app.get("/users/:id", userRetrieveView.get);
 app.patch("/users/:id", userUpdateView.patch);
 app.delete("/users/:id", userDestroyView.delete);
-// app.get("/books", PRF.ListView("Book"));
-// app.post("/users", CreateView(prisma, "user"));
-
-// app.get("/users", ListView(prisma.user));
-// app.post("/users", CreateView(prisma.user));
-// app.get("/users/:id", RetrieveView(prisma.user));
-// app.patch("/users/:id", UpdateView(prisma.user));
-// app.delete("/users/:id", DestroyView(prisma.user));
 
 app.listen(port, () => {
   console.log(`⚡️[server]: Server is running at http://localhost:${port}`);
