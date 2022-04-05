@@ -49,15 +49,35 @@ class DetailView extends View {
 }
 
 class ListView extends View {
+  pageSize: number = 10;
+
   constructor(ModelClass: typeof Model) {
     super(ModelClass);
     this.get = this.get.bind(this);
   }
 
+  getPageQuery(req: Request) {
+    const page = req.query.page as string | undefined;
+    const pageSize = req.query.pageSize as string | undefined;
+
+    return {
+      page: page ? parseInt(page) : 1,
+      pageSize: pageSize ? parseInt(pageSize) : this.pageSize,
+    };
+  }
+
   @ErrorHandler
   async get(req: Request, res: Response) {
-    const result = await this.model.list();
-    res.json(result);
+    const pageQuery = this.getPageQuery(req);
+    const { page, pageSize } = pageQuery;
+    const skip = (page - 1) * pageSize;
+    const take = pageSize;
+
+    let result = await this.model.list({ skip, take });
+    if (!result) {
+      result = [];
+    }
+    res.json({ data: result, count: result.length });
   }
 }
 

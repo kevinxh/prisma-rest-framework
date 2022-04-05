@@ -2,6 +2,7 @@ import { Prisma } from "@prisma/client";
 import { Request, Response } from "express";
 import { withPrisma, WithPrismaInterface } from "./client";
 import { ValidationError } from "./errors";
+import { FindMany } from "./querys";
 import { IValidationError } from "./types";
 
 interface Dictionary<T> {
@@ -154,9 +155,20 @@ class Model {
     return filtered;
   }
 
-  public async list() {
+  public async list(options?: { skip?: number; take?: number }) {
+    const { skip, take } = options || {};
+    let q = new FindMany().select(this._fields);
+
+    if (skip) {
+      q = q.skip(skip < 0 ? 0 : skip);
+    }
+
+    if (take) {
+      q = q.take(take);
+    }
+
     // @ts-ignore
-    const list = await this.prisma[this.key].findMany();
+    const list = await this.prisma[this.key].findMany(q.query);
     const serialized = list.map((instance: object) => this.serialize(instance));
     return serialized;
   }

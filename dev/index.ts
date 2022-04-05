@@ -39,7 +39,11 @@ class UserModel extends Model {
   };
 }
 
-const userListView = new ListView(UserModel);
+class PaginatedListView extends ListView {
+  pageSize = 5;
+}
+
+const userListView = new PaginatedListView(UserModel);
 const userCreateView = new CreateView(UserModel);
 const userRetrieveView = new RetrieveView(UserModel);
 const userUpdateView = new UpdateView(UserModel);
