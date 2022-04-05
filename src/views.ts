@@ -69,7 +69,7 @@ class CreateView extends View {
 
   @ErrorHandler
   async post(req: Request, res: Response) {
-    const isValid = this.model._validate(req.body);
+    const isValid = this.model.validateAll(req.body);
     if (!isValid) {
       throw new APIValidationError(this.model.errors);
     }
@@ -103,7 +103,7 @@ class UpdateView extends DetailView {
   @ErrorHandler
   async patch(req: Request, res: Response) {
     // TODO: do we validate first or searlize first??
-    const isValid = this.model._validate(req.body);
+    const isValid = this.model.validateAll(req.body);
     if (!isValid) {
       throw new APIValidationError(this.model.errors);
     }

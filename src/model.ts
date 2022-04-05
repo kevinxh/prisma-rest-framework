@@ -80,7 +80,7 @@ class Model {
   // 2, field level - validate_{field}()
   // Invoke all validators and return an error message.
   // @ts-ignore
-  _validate(instance) {
+  validateAll(instance) {
     let errors = [];
     // Check required fields
     this._requiredFields.forEach((requiredField) => {
