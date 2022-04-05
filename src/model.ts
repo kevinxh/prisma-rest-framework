@@ -25,19 +25,19 @@ class Model {
   private _validated = false;
   private _errors: IValidationError[] = [];
 
-  get key() {
+  public get key() {
     return this.name?.toLowerCase() as Lowercase<Prisma.ModelName>;
   }
 
-  get isValid() {
+  public get isValid() {
     return this._validated && this._errors.length === 0;
   }
 
-  get isValidated() {
+  public get isValidated() {
     return this._validated;
   }
 
-  get errors() {
+  public get errors() {
     return this._errors;
   }
 
@@ -80,7 +80,7 @@ class Model {
   // 2, field level - validate_{field}()
   // Invoke all validators and return an error message.
   // @ts-ignore
-  validateAll(instance) {
+  public validateAll(instance) {
     let errors = [];
     // Check required fields
     this._requiredFields.forEach((requiredField) => {
@@ -125,11 +125,11 @@ class Model {
     return this.isValid;
   }
 
-  getField(name: string) {
+  public getField(name: string) {
     return this._prismaFieldDetailMap[name];
   }
 
-  deserialize(data: object) {
+  public deserialize(data: object) {
     // Remove unrecognized fields from input
     const filtered = this._allFields.reduce((prev, curr) => {
       if (curr in data) {
@@ -143,7 +143,7 @@ class Model {
 
   // This function filters the object keys by this.fields
   // @ts-ignore How to refer to the dynamically generated Prisma model instance type?
-  serialize(instance: any) {
+  public serialize(instance: any) {
     const filtered = this._fields.reduce((prev, curr) => {
       if (curr in instance) {
         return Object.assign(prev, { [curr]: instance[curr] });
@@ -154,14 +154,14 @@ class Model {
     return filtered;
   }
 
-  async list() {
+  public async list() {
     // @ts-ignore
     const list = await this.prisma[this.key].findMany();
     const serialized = list.map((instance: object) => this.serialize(instance));
     return serialized;
   }
 
-  async create(data: any) {
+  public async create(data: any) {
     const deserialized = this.deserialize(data);
     // @ts-ignore
     const instance = await this.prisma[this.key].create({
@@ -171,7 +171,7 @@ class Model {
     return serialized;
   }
 
-  async retrieve(id: string) {
+  public async retrieve(id: string) {
     // TODO: handle record not found situation
     // @ts-ignore
     const instance = await this.prisma[this.key].findUnique({
@@ -185,7 +185,7 @@ class Model {
     return serialized;
   }
 
-  async update(id: string, data: any) {
+  public async update(id: string, data: any) {
     const deserialized = this.deserialize(data);
 
     // TODO: handle record not found situation, handle invalid update (e.g. unique fields)
@@ -200,7 +200,7 @@ class Model {
     return serialized;
   }
 
-  async destroy(id: string) {
+  public async destroy(id: string) {
     // TODO: handle record not found situation, handle invalid update (e.g. unique fields)
     // @ts-ignore
     const instance = await this.prisma[this.key].delete({
@@ -212,7 +212,7 @@ class Model {
     return serialized;
   }
 
-  _formatId(id: string) {
+  private _formatId(id: string) {
     const idType = this.getField(this.uniqueIdField).type as PrismaIDFieldTypes;
 
     if (idType === "Int") {
