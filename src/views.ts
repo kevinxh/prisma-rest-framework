@@ -38,13 +38,13 @@ class View {
 }
 
 class DetailView extends View {
-  lookup: string = "id";
+  lookupField: string = "id";
   constructor(ModelClass: typeof Model) {
     super(ModelClass);
   }
 
   getLookupParam(req: Request) {
-    return req.params[this.lookup];
+    return req.params[this.lookupField];
   }
 }
 
@@ -56,7 +56,7 @@ class ListView extends View {
 
   @ErrorHandler
   async get(req: Request, res: Response) {
-    const result = await this.model.list(req, res);
+    const result = await this.model.list();
     res.json(result);
   }
 }
@@ -74,7 +74,7 @@ class CreateView extends View {
       throw new APIValidationError(this.model.errors);
     }
 
-    const result = await this.model.create(req, res);
+    const result = await this.model.create(req.body);
     res.status(201).json(result);
   }
 }

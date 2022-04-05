@@ -154,18 +154,18 @@ class Model {
     return filtered;
   }
 
-  async list(req: Request, res: Response) {
+  async list() {
     // @ts-ignore
     const list = await this.prisma[this.key].findMany();
     const serialized = list.map((instance: object) => this.serialize(instance));
     return serialized;
   }
 
-  async create(req: Request, res: Response) {
-    const data = this.deserialize(req.body);
+  async create(data: any) {
+    const deserialized = this.deserialize(data);
     // @ts-ignore
     const instance = await this.prisma[this.key].create({
-      data,
+      data: deserialized,
     });
     const serialized = this.serialize(instance);
     return serialized;
@@ -186,7 +186,7 @@ class Model {
   }
 
   async update(id: string, data: any) {
-    const deserializedData = this.deserialize(data);
+    const deserialized = this.deserialize(data);
 
     // TODO: handle record not found situation, handle invalid update (e.g. unique fields)
     // @ts-ignore
@@ -194,7 +194,7 @@ class Model {
       where: {
         [this.uniqueIdField]: this._formatId(id),
       },
-      data: deserializedData,
+      data: deserialized,
     });
     const serialized = this.serialize(instance);
     return serialized;
