@@ -48,10 +48,10 @@ class ListMixin {
   async list(req: Request, res: Response) {
     // @ts-ignore
     const list = await this.prisma[this.model.key].findMany();
-    const filtered = list.map((instance: object) =>
+    const serialized = list.map((instance: object) =>
       this.model.serialize(instance)
     );
-    return filtered;
+    return serialized;
   }
 }
 
@@ -63,8 +63,8 @@ class CreateMixin {
     const instance = await this.prisma[this.model.key].create({
       data,
     });
-    const filtered = this.model.serialize(instance);
-    return filtered;
+    const serialized = this.model.serialize(instance);
+    return serialized;
   }
 }
 
@@ -87,8 +87,8 @@ class RetrieveMixin {
         [uniqueIdField]: Number(req.params[param]),
       },
     });
-    const filtered = this.model.serialize(instance);
-    return filtered;
+    const serialized = this.model.serialize(instance);
+    return serialized;
   }
 }
 
@@ -111,8 +111,8 @@ class UpdateMixin {
       },
       data,
     });
-    const filtered = this.model.serialize(instance);
-    return filtered;
+    const serialized = this.model.serialize(instance);
+    return serialized;
   }
 }
 
@@ -132,8 +132,8 @@ class DestroyMixin {
         [uniqueIdField]: Number(req.params[param]),
       },
     });
-    const filtered = this.model.serialize(instance);
-    return filtered;
+    const serialized = this.model.serialize(instance);
+    return serialized;
   }
 }
 
