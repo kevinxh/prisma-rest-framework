@@ -69,10 +69,16 @@ class CreateMixin {
 }
 
 class ListView extends View {
-  get = async (req: Request, res: Response) => {
+  constructor(ModelClass: typeof Model) {
+    super(ModelClass);
+    this.get = this.get.bind(this);
+  }
+
+  @ErrorHandler
+  async get(req: Request, res: Response) {
     const result = await this.list(req, res);
     res.json(result);
-  };
+  }
 }
 interface ListView extends ListMixin {}
 applyMixins(ListView, [ListMixin]);
