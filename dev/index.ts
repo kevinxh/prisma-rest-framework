@@ -2,7 +2,13 @@ import { Prisma, PrismaClient, User } from "@prisma/client";
 import express, { Express, Request, Response } from "express";
 import Model from "../src/model";
 import PrismaRestFrameworkClient from "../src/client";
-import { ListView, CreateView, RetrieveView, UpdateView } from "../src/views";
+import {
+  ListView,
+  CreateView,
+  RetrieveView,
+  UpdateView,
+  DestroyView,
+} from "../src/views";
 import { ValidationError } from "../src/errors";
 
 const prisma = new PrismaClient();
@@ -19,7 +25,7 @@ app.get("/", (req: Request, res: Response) => {
 
 class UserModel extends Model {
   name = "User" as Prisma.ModelName;
-  fields = ["name", "email"];
+  fields = ["id", "name", "email"];
 
   // required fields by default are those Prisma field that
   // is not marked as optional (?) and do not have default
@@ -41,11 +47,15 @@ const userRetrieveView = new RetrieveView(UserModel, {
 const userUpdateView = new UpdateView(UserModel, {
   idParam: "userId",
 });
+const userDestroyView = new DestroyView(UserModel, {
+  idParam: "userId",
+});
 
 app.get("/users", userListView.get);
 app.post("/users", userCreateView.post);
 app.get("/users/:userId", userRetrieveView.get);
 app.patch("/users/:userId", userUpdateView.patch);
+app.delete("/users/:userId", userDestroyView.delete);
 // app.get("/books", PRF.ListView("Book"));
 // app.post("/users", CreateView(prisma, "user"));
 

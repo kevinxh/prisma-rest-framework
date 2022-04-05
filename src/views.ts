@@ -116,6 +116,27 @@ class UpdateMixin {
   }
 }
 
+interface DestroyMixin extends View, WithPrismaInterface {}
+class DestroyMixin {
+  idParam = "id";
+  async destroy(req: Request, res: Response, options?: IRetrieveMixinOptions) {
+    const param = options?.idParam || this.idParam;
+    const uniqueIdField = this.model.uniqueIdField;
+
+    // TODO: handle record not found situation, handle invalid update (e.g. unique fields)
+    // @ts-ignore
+    const instance = await this.prisma[this.model.key].delete({
+      where: {
+        // what about strings?
+        // TODO: replace Number()
+        [uniqueIdField]: Number(req.params[param]),
+      },
+    });
+    const filtered = this.model.serialize(instance);
+    return filtered;
+  }
+}
+
 class ListView extends View {
   constructor(ModelClass: typeof Model) {
     super(ModelClass);
@@ -193,4 +214,22 @@ class UpdateView extends View {
 interface UpdateView extends UpdateMixin {}
 applyMixins(UpdateView, [UpdateMixin]);
 
-export { View, ListView, CreateView, RetrieveView, UpdateView };
+class DestroyView extends View {
+  mixinOptions?: IRetrieveMixinOptions;
+
+  constructor(ModelClass: typeof Model, mixinOptions?: IRetrieveMixinOptions) {
+    super(ModelClass);
+    this.delete = this.delete.bind(this);
+    this.mixinOptions = mixinOptions;
+  }
+
+  @ErrorHandler
+  async delete(req: Request, res: Response) {
+    const result = await this.destroy(req, res, this.mixinOptions);
+    res.status(204).end();
+  }
+}
+interface DestroyView extends DestroyMixin {}
+applyMixins(DestroyView, [DestroyMixin]);
+
+export { View, ListView, CreateView, RetrieveView, UpdateView, DestroyView };
