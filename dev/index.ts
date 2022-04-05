@@ -2,7 +2,7 @@ import { Prisma, PrismaClient, User } from "@prisma/client";
 import express, { Express, Request, Response } from "express";
 import Model from "../src/model";
 import PrismaRestFrameworkClient from "../src/client";
-import { ListView, CreateView, RetrieveView } from "../src/views";
+import { ListView, CreateView, RetrieveView, UpdateView } from "../src/views";
 import { ValidationError } from "../src/errors";
 
 const prisma = new PrismaClient();
@@ -38,10 +38,14 @@ const userCreateView = new CreateView(UserModel);
 const userRetrieveView = new RetrieveView(UserModel, {
   idParam: "userId",
 });
+const userUpdateView = new UpdateView(UserModel, {
+  idParam: "userId",
+});
 
 app.get("/users", userListView.get);
 app.post("/users", userCreateView.post);
 app.get("/users/:userId", userRetrieveView.get);
+app.patch("/users/:userId", userUpdateView.patch);
 // app.get("/books", PRF.ListView("Book"));
 // app.post("/users", CreateView(prisma, "user"));
 

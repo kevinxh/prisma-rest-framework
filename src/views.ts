@@ -92,6 +92,30 @@ class RetrieveMixin {
   }
 }
 
+interface UpdateMixin extends View, WithPrismaInterface {}
+class UpdateMixin {
+  idParam = "id";
+  async update(req: Request, res: Response, options?: IRetrieveMixinOptions) {
+    const param = options?.idParam || this.idParam;
+    const uniqueIdField = this.model.uniqueIdField;
+
+    const data = this.model.deserialize(req.body);
+
+    // TODO: handle record not found situation, handle invalid update (e.g. unique fields)
+    // @ts-ignore
+    const instance = await this.prisma[this.model.key].update({
+      where: {
+        // what about strings?
+        // TODO: replace Number()
+        [uniqueIdField]: Number(req.params[param]),
+      },
+      data,
+    });
+    const filtered = this.model.serialize(instance);
+    return filtered;
+  }
+}
+
 class ListView extends View {
   constructor(ModelClass: typeof Model) {
     super(ModelClass);
@@ -132,7 +156,7 @@ class RetrieveView extends View {
 
   constructor(ModelClass: typeof Model, mixinOptions?: IRetrieveMixinOptions) {
     super(ModelClass);
-    // TODO: this get conflicts with list
+    // TODO: this get conflicts with list view?
     this.get = this.get.bind(this);
     this.mixinOptions = mixinOptions;
   }
@@ -146,4 +170,27 @@ class RetrieveView extends View {
 interface RetrieveView extends RetrieveMixin {}
 applyMixins(RetrieveView, [RetrieveMixin]);
 
-export { View, ListView, CreateView, RetrieveView };
+class UpdateView extends View {
+  mixinOptions?: IRetrieveMixinOptions;
+
+  constructor(ModelClass: typeof Model, mixinOptions?: IRetrieveMixinOptions) {
+    super(ModelClass);
+    this.patch = this.patch.bind(this);
+    this.mixinOptions = mixinOptions;
+  }
+
+  @ErrorHandler
+  async patch(req: Request, res: Response) {
+    // TODO: do we validate first or searlize first??
+    const isValid = this.model._validate(req.body);
+    if (!isValid) {
+      throw new APIValidationError(this.model.errors);
+    }
+    const result = await this.update(req, res, this.mixinOptions);
+    res.json(result);
+  }
+}
+interface UpdateView extends UpdateMixin {}
+applyMixins(UpdateView, [UpdateMixin]);
+
+export { View, ListView, CreateView, RetrieveView, UpdateView };
