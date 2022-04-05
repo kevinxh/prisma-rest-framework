@@ -1,10 +1,16 @@
 import { Prisma } from "@prisma/client";
+import { Request, Response } from "express";
 import { withPrisma, WithPrismaInterface } from "./client";
 import { ValidationError } from "./errors";
 import { IValidationError } from "./types";
 
 interface Dictionary<T> {
   [key: string]: T;
+}
+
+enum PrismaIDFieldTypes {
+  Int = "Int",
+  String = "String",
 }
 
 interface Model extends WithPrismaInterface {}
@@ -40,23 +46,33 @@ class Model {
   }
 
   private get _allFields() {
-    return this._prismaFieldDetails.map((field) => field.name);
+    return this._prismaFieldDetailList.map((field) => field.name);
   }
 
   private get _requiredFields() {
     return new Set([
-      ...this._prismaFieldDetails
+      ...this._prismaFieldDetailList
         .filter((field) => field.isRequired && !field.hasDefaultValue)
         .map((field) => field.name),
       ...(this.requiredFields || []),
     ]);
   }
 
-  private get _prismaFieldDetails() {
+  private get _prismaFieldDetailList() {
     // @ts-ignore reading a private property _dmmf :(
     return (this.prisma._dmmf.modelMap as Dictionary<Prisma.DMMF.Model>)[
       this.name!
     ].fields;
+  }
+
+  private get _prismaFieldDetailMap() {
+    // @ts-ignore reading a private property _dmmf :(
+    return Object.fromEntries(
+      this._prismaFieldDetailList.map(({ ["name"]: prop, ...rest }) => [
+        prop,
+        { ...rest },
+      ])
+    );
   }
 
   // There are 2 types of validations:
@@ -109,6 +125,10 @@ class Model {
     return this.isValid;
   }
 
+  getField(name: string) {
+    return this._prismaFieldDetailMap[name];
+  }
+
   deserialize(data: object) {
     // Remove unrecognized fields from input
     const filtered = this._allFields.reduce((prev, curr) => {
@@ -123,7 +143,7 @@ class Model {
 
   // This function filters the object keys by this.fields
   // @ts-ignore How to refer to the dynamically generated Prisma model instance type?
-  serialize(instance: Dictionary) {
+  serialize(instance: any) {
     const filtered = this._fields.reduce((prev, curr) => {
       if (curr in instance) {
         return Object.assign(prev, { [curr]: instance[curr] });
@@ -132,6 +152,73 @@ class Model {
     }, {});
 
     return filtered;
+  }
+
+  async list(req: Request, res: Response) {
+    // @ts-ignore
+    const list = await this.prisma[this.key].findMany();
+    const serialized = list.map((instance: object) => this.serialize(instance));
+    return serialized;
+  }
+
+  async create(req: Request, res: Response) {
+    const data = this.deserialize(req.body);
+    // @ts-ignore
+    const instance = await this.prisma[this.key].create({
+      data,
+    });
+    const serialized = this.serialize(instance);
+    return serialized;
+  }
+
+  async retrieve(id: string) {
+    // TODO: handle record not found situation
+    // @ts-ignore
+    const instance = await this.prisma[this.key].findUnique({
+      where: {
+        // what about strings?
+        // TODO: replace Number()
+        [this.uniqueIdField]: this._formatId(id),
+      },
+    });
+    const serialized = this.serialize(instance);
+    return serialized;
+  }
+
+  async update(id: string, data: any) {
+    const deserializedData = this.deserialize(data);
+
+    // TODO: handle record not found situation, handle invalid update (e.g. unique fields)
+    // @ts-ignore
+    const instance = await this.prisma[this.key].update({
+      where: {
+        [this.uniqueIdField]: this._formatId(id),
+      },
+      data: deserializedData,
+    });
+    const serialized = this.serialize(instance);
+    return serialized;
+  }
+
+  async destroy(id: string) {
+    // TODO: handle record not found situation, handle invalid update (e.g. unique fields)
+    // @ts-ignore
+    const instance = await this.prisma[this.key].delete({
+      where: {
+        [this.uniqueIdField]: this._formatId(id),
+      },
+    });
+    const serialized = this.serialize(instance);
+    return serialized;
+  }
+
+  _formatId(id: string) {
+    const idType = this.getField(this.uniqueIdField).type as PrismaIDFieldTypes;
+
+    if (idType === "Int") {
+      return parseInt(id);
+    }
+    return id;
   }
 }
 

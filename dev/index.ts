@@ -41,21 +41,15 @@ class UserModel extends Model {
 
 const userListView = new ListView(UserModel);
 const userCreateView = new CreateView(UserModel);
-const userRetrieveView = new RetrieveView(UserModel, {
-  idParam: "userId",
-});
-const userUpdateView = new UpdateView(UserModel, {
-  idParam: "userId",
-});
-const userDestroyView = new DestroyView(UserModel, {
-  idParam: "userId",
-});
+const userRetrieveView = new RetrieveView(UserModel);
+const userUpdateView = new UpdateView(UserModel);
+const userDestroyView = new DestroyView(UserModel);
 
 app.get("/users", userListView.get);
 app.post("/users", userCreateView.post);
-app.get("/users/:userId", userRetrieveView.get);
-app.patch("/users/:userId", userUpdateView.patch);
-app.delete("/users/:userId", userDestroyView.delete);
+app.get("/users/:id", userRetrieveView.get);
+app.patch("/users/:id", userUpdateView.patch);
+app.delete("/users/:id", userDestroyView.delete);
 // app.get("/books", PRF.ListView("Book"));
 // app.post("/users", CreateView(prisma, "user"));
 

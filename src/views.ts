@@ -1,7 +1,5 @@
 import { Request, Response } from "express";
-import { WithPrismaInterface, PrismaMixin } from "./client";
 import Model from "./model";
-import { applyMixins } from "./utils";
 import { APIValidationError, APIInternalServerError } from "./errors";
 
 const ErrorHandler = (target: any, propertyName: any, descriptor: any) => {
@@ -29,7 +27,6 @@ const ErrorHandler = (target: any, propertyName: any, descriptor: any) => {
   return descriptor;
 };
 
-interface View extends WithPrismaInterface {}
 class View {
   ModelClass: typeof Model;
   model: Model;
@@ -39,101 +36,15 @@ class View {
     this.model = new ModelClass();
   }
 }
-applyMixins(View, [PrismaMixin]);
 
-interface ListMixin extends View, WithPrismaInterface {}
-class ListMixin {
-  // Note: mixins must not use class public fields
-  // they will not work with how we apply mixins
-  async list(req: Request, res: Response) {
-    // @ts-ignore
-    const list = await this.prisma[this.model.key].findMany();
-    const serialized = list.map((instance: object) =>
-      this.model.serialize(instance)
-    );
-    return serialized;
+class DetailView extends View {
+  lookup: string = "id";
+  constructor(ModelClass: typeof Model) {
+    super(ModelClass);
   }
-}
 
-interface CreateMixin extends View, WithPrismaInterface {}
-class CreateMixin {
-  async create(req: Request, res: Response) {
-    const data = this.model.deserialize(req.body);
-    // @ts-ignore
-    const instance = await this.prisma[this.model.key].create({
-      data,
-    });
-    const serialized = this.model.serialize(instance);
-    return serialized;
-  }
-}
-
-interface IRetrieveMixinOptions {
-  idParam: string;
-}
-interface RetrieveMixin extends View, WithPrismaInterface {}
-class RetrieveMixin {
-  idParam = "id";
-  async retrieve(req: Request, res: Response, options?: IRetrieveMixinOptions) {
-    const param = options?.idParam || this.idParam;
-    const uniqueIdField = this.model.uniqueIdField;
-
-    // TODO: handle record not found situation
-    // @ts-ignore
-    const instance = await this.prisma[this.model.key].findUnique({
-      where: {
-        // what about strings?
-        // TODO: replace Number()
-        [uniqueIdField]: Number(req.params[param]),
-      },
-    });
-    const serialized = this.model.serialize(instance);
-    return serialized;
-  }
-}
-
-interface UpdateMixin extends View, WithPrismaInterface {}
-class UpdateMixin {
-  idParam = "id";
-  async update(req: Request, res: Response, options?: IRetrieveMixinOptions) {
-    const param = options?.idParam || this.idParam;
-    const uniqueIdField = this.model.uniqueIdField;
-
-    const data = this.model.deserialize(req.body);
-
-    // TODO: handle record not found situation, handle invalid update (e.g. unique fields)
-    // @ts-ignore
-    const instance = await this.prisma[this.model.key].update({
-      where: {
-        // what about strings?
-        // TODO: replace Number()
-        [uniqueIdField]: Number(req.params[param]),
-      },
-      data,
-    });
-    const serialized = this.model.serialize(instance);
-    return serialized;
-  }
-}
-
-interface DestroyMixin extends View, WithPrismaInterface {}
-class DestroyMixin {
-  idParam = "id";
-  async destroy(req: Request, res: Response, options?: IRetrieveMixinOptions) {
-    const param = options?.idParam || this.idParam;
-    const uniqueIdField = this.model.uniqueIdField;
-
-    // TODO: handle record not found situation, handle invalid update (e.g. unique fields)
-    // @ts-ignore
-    const instance = await this.prisma[this.model.key].delete({
-      where: {
-        // what about strings?
-        // TODO: replace Number()
-        [uniqueIdField]: Number(req.params[param]),
-      },
-    });
-    const serialized = this.model.serialize(instance);
-    return serialized;
+  getLookupParam(req: Request) {
+    return req.params[this.lookup];
   }
 }
 
@@ -145,12 +56,10 @@ class ListView extends View {
 
   @ErrorHandler
   async get(req: Request, res: Response) {
-    const result = await this.list(req, res);
+    const result = await this.model.list(req, res);
     res.json(result);
   }
 }
-interface ListView extends ListMixin {}
-applyMixins(ListView, [ListMixin]);
 
 class CreateView extends View {
   constructor(ModelClass: typeof Model) {
@@ -165,39 +74,30 @@ class CreateView extends View {
       throw new APIValidationError(this.model.errors);
     }
 
-    const result = await this.create(req, res);
+    const result = await this.model.create(req, res);
     res.status(201).json(result);
   }
 }
-interface CreateView extends CreateMixin {}
-applyMixins(CreateView, [CreateMixin]);
 
-class RetrieveView extends View {
-  mixinOptions?: IRetrieveMixinOptions;
-
-  constructor(ModelClass: typeof Model, mixinOptions?: IRetrieveMixinOptions) {
+class RetrieveView extends DetailView {
+  constructor(ModelClass: typeof Model) {
     super(ModelClass);
     // TODO: this get conflicts with list view?
     this.get = this.get.bind(this);
-    this.mixinOptions = mixinOptions;
   }
 
   @ErrorHandler
   async get(req: Request, res: Response) {
-    const result = await this.retrieve(req, res, this.mixinOptions);
+    const id = this.getLookupParam(req);
+    const result = await this.model.retrieve(id);
     res.json(result);
   }
 }
-interface RetrieveView extends RetrieveMixin {}
-applyMixins(RetrieveView, [RetrieveMixin]);
 
-class UpdateView extends View {
-  mixinOptions?: IRetrieveMixinOptions;
-
-  constructor(ModelClass: typeof Model, mixinOptions?: IRetrieveMixinOptions) {
+class UpdateView extends DetailView {
+  constructor(ModelClass: typeof Model) {
     super(ModelClass);
     this.patch = this.patch.bind(this);
-    this.mixinOptions = mixinOptions;
   }
 
   @ErrorHandler
@@ -207,29 +107,25 @@ class UpdateView extends View {
     if (!isValid) {
       throw new APIValidationError(this.model.errors);
     }
-    const result = await this.update(req, res, this.mixinOptions);
+
+    const id = this.getLookupParam(req);
+    const result = await this.model.update(id, req.body);
     res.json(result);
   }
 }
-interface UpdateView extends UpdateMixin {}
-applyMixins(UpdateView, [UpdateMixin]);
 
-class DestroyView extends View {
-  mixinOptions?: IRetrieveMixinOptions;
-
-  constructor(ModelClass: typeof Model, mixinOptions?: IRetrieveMixinOptions) {
+class DestroyView extends DetailView {
+  constructor(ModelClass: typeof Model) {
     super(ModelClass);
     this.delete = this.delete.bind(this);
-    this.mixinOptions = mixinOptions;
   }
 
   @ErrorHandler
   async delete(req: Request, res: Response) {
-    const result = await this.destroy(req, res, this.mixinOptions);
+    const id = this.getLookupParam(req);
+    const result = await this.model.destroy(id);
     res.status(204).end();
   }
 }
-interface DestroyView extends DestroyMixin {}
-applyMixins(DestroyView, [DestroyMixin]);
 
 export { View, ListView, CreateView, RetrieveView, UpdateView, DestroyView };
