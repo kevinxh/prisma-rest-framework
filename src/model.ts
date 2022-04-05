@@ -13,6 +13,7 @@ interface Model extends WithPrismaInterface {}
 class Model {
   name: Prisma.ModelName | undefined;
   fields?: string[];
+  requiredFields?: string[];
   validate?: (instace: any) => void;
   private _validated = false;
   private _errors: IValidationError[] = [];
@@ -34,10 +35,23 @@ class Model {
   }
 
   private get _fields() {
-    return this.fields || this._prismaFieldsArr.map((field) => field.name);
+    return this.fields || this._allFields;
   }
 
-  private get _prismaFieldsArr() {
+  private get _allFields() {
+    return this._prismaFieldDetails.map((field) => field.name);
+  }
+
+  private get _requiredFields() {
+    return new Set([
+      ...this._prismaFieldDetails
+        .filter((field) => field.isRequired && !field.hasDefaultValue)
+        .map((field) => field.name),
+      ...(this.requiredFields || []),
+    ]);
+  }
+
+  private get _prismaFieldDetails() {
     // @ts-ignore reading a private property _dmmf :(
     return (this.prisma._dmmf.modelMap as Dictionary<Prisma.DMMF.Model>)[
       this.name!
@@ -51,6 +65,17 @@ class Model {
   // @ts-ignore
   _validate(instance) {
     let errors = [];
+    // Check required fields
+    this._requiredFields.forEach((requiredField) => {
+      if (!(requiredField in instance)) {
+        errors.push({
+          field: requiredField,
+          message: "Missing required field.",
+        });
+      }
+    });
+
+    // Run object level validator
     try {
       this.validate && this.validate(instance);
     } catch (e: any) {
@@ -60,6 +85,8 @@ class Model {
         throw e;
       }
     }
+
+    // Run field level validator
     const fieldValidators = Object.getOwnPropertyNames(this).filter(
       (property) => /^validate_/.test(property)
     );
@@ -81,9 +108,21 @@ class Model {
     return this.isValid;
   }
 
+  deserialize(data: object) {
+    // Remove unrecognized fields from input
+    const filtered = this._allFields.reduce((prev, curr) => {
+      if (curr in data) {
+        // @ts-ignore
+        return Object.assign(prev, { [curr]: data[curr] });
+      }
+      return prev;
+    }, {});
+    return filtered;
+  }
+
   // This function filters the object keys by this.fields
   // @ts-ignore How to refer to the dynamically generated Prisma model instance type?
-  filter(instance) {
+  serialize(instance: Dictionary) {
     const filtered = this._fields.reduce((prev, curr) => {
       if (curr in instance) {
         return Object.assign(prev, { [curr]: instance[curr] });

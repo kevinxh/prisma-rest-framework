@@ -1,8 +1,8 @@
 {
   "name": "dev",
   "scripts": {
-    "start": "nodemon example.ts",
-    "debug": "nodemon --exec \"node --inspect-brk -r ts-node/register example.ts\"",
+    "start": "nodemon index.ts --watch ../src --watch index.ts",
+    "debug": "nodemon --exec \"node --inspect-brk -r ts-node/register index.ts\"",
     "lint": "ts-standard",
     "generate": "prisma generate",
     "db:reset": "prisma migrate reset",

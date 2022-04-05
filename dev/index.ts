@@ -20,11 +20,16 @@ app.get("/", (req: Request, res: Response) => {
 class UserModel extends Model {
   name = "User" as Prisma.ModelName;
   fields = ["name", "email"];
+
+  // required fields by default are those Prisma field that
+  // is not marked as optional (?) and do not have default
+  // you can also manually add required fields here
+  requiredFields = ["name", "email"];
   validate = (instance: User) => {
     // throw new ValidationError("data is wrong!");
   };
   validate_email = (email: User["email"], instance: User) => {
-    throw new ValidationError("email is bad!");
+    // throw new ValidationError("email is bad!");
   };
 }
 

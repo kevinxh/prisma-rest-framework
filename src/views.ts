@@ -11,15 +11,18 @@ const ErrorHandler = (target: any, propertyName: any, descriptor: any) => {
     const [req, res] = args as [Request, Response];
     try {
       return await method.apply(this, args);
-    } catch (error) {
+    } catch (error: any) {
       if (error instanceof APIValidationError) {
-        res
+        return res
           .status(APIValidationError.StatusCode)
           .json({ message: error.message, errors: error.errors });
       }
       res
         .status(APIInternalServerError.StatusCode)
-        .json({ message: APIInternalServerError.message });
+        // TODO: for production environment, don't leak internal error
+        // .json({ message: APIInternalServerError.message });
+        .json({ message: error.message });
+      console.error(error.stack);
     }
   };
 
@@ -28,12 +31,12 @@ const ErrorHandler = (target: any, propertyName: any, descriptor: any) => {
 
 interface View extends WithPrismaInterface {}
 class View {
-  SerializerClass: typeof Model;
-  serializer: Model;
+  ModelClass: typeof Model;
+  model: Model;
 
-  constructor(Serializer: typeof Model) {
-    this.SerializerClass = Serializer;
-    this.serializer = new Serializer();
+  constructor(ModelClass: typeof Model) {
+    this.ModelClass = ModelClass;
+    this.model = new ModelClass();
   }
 }
 applyMixins(View, [PrismaMixin]);
@@ -44,9 +47,9 @@ class ListMixin {
   // they will not work with how we apply mixins
   async list(req: Request, res: Response) {
     // @ts-ignore
-    const list = await this.prisma[this.serializer.key].findMany();
+    const list = await this.prisma[this.model.key].findMany();
     const filtered = list.map((instance: object) =>
-      this.serializer.filter(instance)
+      this.model.serialize(instance)
     );
     return filtered;
   }
@@ -55,11 +58,12 @@ class ListMixin {
 interface CreateMixin extends View, WithPrismaInterface {}
 class CreateMixin {
   async create(req: Request, res: Response) {
+    const data = this.model.deserialize(req.body);
     // @ts-ignore
-    const instance = await this.prisma[this.serializer.key].create({
-      data: req.body,
+    const instance = await this.prisma[this.model.key].create({
+      data,
     });
-    const filtered = this.serializer.filter(instance);
+    const filtered = this.model.serialize(instance);
     return filtered;
   }
 }
@@ -74,16 +78,16 @@ interface ListView extends ListMixin {}
 applyMixins(ListView, [ListMixin]);
 
 class CreateView extends View {
-  constructor(Serializer: typeof Model) {
-    super(Serializer);
+  constructor(ModelClass: typeof Model) {
+    super(ModelClass);
     this.post = this.post.bind(this);
   }
 
   @ErrorHandler
   async post(req: Request, res: Response) {
-    const isValid = this.serializer._validate(req.body);
+    const isValid = this.model._validate(req.body);
     if (!isValid) {
-      throw new APIValidationError(this.serializer.errors);
+      throw new APIValidationError(this.model.errors);
     }
 
     const result = await this.create(req, res);
