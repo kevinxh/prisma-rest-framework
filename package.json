@@ -7,7 +7,7 @@
     "lint": "ts-standard"
   },
   "author": "Kevin He",
-  "license": "ISC",
+  "license": "MIT",
   "devDependencies": {
     "@types/express": "^4.17.13",
     "@types/node": "^17.0.23",
