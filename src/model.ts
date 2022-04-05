@@ -14,6 +14,7 @@ class Model {
   name: Prisma.ModelName | undefined;
   fields?: string[];
   requiredFields?: string[];
+  uniqueIdField: string = "id";
   validate?: (instace: any) => void;
   private _validated = false;
   private _errors: IValidationError[] = [];

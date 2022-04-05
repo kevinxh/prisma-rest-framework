@@ -2,7 +2,7 @@ import { Prisma, PrismaClient, User } from "@prisma/client";
 import express, { Express, Request, Response } from "express";
 import Model from "../src/model";
 import PrismaRestFrameworkClient from "../src/client";
-import { ListView, CreateView } from "../src/views";
+import { ListView, CreateView, RetrieveView } from "../src/views";
 import { ValidationError } from "../src/errors";
 
 const prisma = new PrismaClient();
@@ -35,10 +35,13 @@ class UserModel extends Model {
 
 const userListView = new ListView(UserModel);
 const userCreateView = new CreateView(UserModel);
+const userRetrieveView = new RetrieveView(UserModel, {
+  idParam: "userId",
+});
 
 app.get("/users", userListView.get);
 app.post("/users", userCreateView.post);
-// app.post("/users", PRF.CreateView(new User()));
+app.get("/users/:userId", userRetrieveView.get);
 // app.get("/books", PRF.ListView("Book"));
 // app.post("/users", CreateView(prisma, "user"));
 

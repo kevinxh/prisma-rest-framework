@@ -68,6 +68,30 @@ class CreateMixin {
   }
 }
 
+interface IRetrieveMixinOptions {
+  idParam: string;
+}
+interface RetrieveMixin extends View, WithPrismaInterface {}
+class RetrieveMixin {
+  idParam = "id";
+  async retrieve(req: Request, res: Response, options?: IRetrieveMixinOptions) {
+    const param = options?.idParam || this.idParam;
+    const uniqueIdField = this.model.uniqueIdField;
+
+    // TODO: handle record not found situation
+    // @ts-ignore
+    const instance = await this.prisma[this.model.key].findUnique({
+      where: {
+        // what about strings?
+        // TODO: replace Number()
+        [uniqueIdField]: Number(req.params[param]),
+      },
+    });
+    const filtered = this.model.serialize(instance);
+    return filtered;
+  }
+}
+
 class ListView extends View {
   constructor(ModelClass: typeof Model) {
     super(ModelClass);
@@ -103,4 +127,23 @@ class CreateView extends View {
 interface CreateView extends CreateMixin {}
 applyMixins(CreateView, [CreateMixin]);
 
-export { View, ListView, CreateView };
+class RetrieveView extends View {
+  mixinOptions?: IRetrieveMixinOptions;
+
+  constructor(ModelClass: typeof Model, mixinOptions?: IRetrieveMixinOptions) {
+    super(ModelClass);
+    // TODO: this get conflicts with list
+    this.get = this.get.bind(this);
+    this.mixinOptions = mixinOptions;
+  }
+
+  @ErrorHandler
+  async get(req: Request, res: Response) {
+    const result = await this.retrieve(req, res, this.mixinOptions);
+    res.json(result);
+  }
+}
+interface RetrieveView extends RetrieveMixin {}
+applyMixins(RetrieveView, [RetrieveMixin]);
+
+export { View, ListView, CreateView, RetrieveView };
