@@ -12,39 +12,40 @@ import {
 import { ValidationError } from "../src/errors";
 
 const prisma = new PrismaClient();
-PrismaRestFrameworkClient.init(prisma);
-
 const app: Express = express();
 const port = 3002;
-
 app.use(express.json());
-
 app.get("/", (req: Request, res: Response) => {
-  res.send("⚡️ Prisma Server");
+  res.send("⚡️ Prisma Rest Framework");
 });
 
+// Step.1 initialize the framework using Prisma client
+PrismaRestFrameworkClient.init(prisma);
+
+// Step.2a declare your model (optional)
 class UserModel extends Model {
   name = "User" as Prisma.ModelName;
   fields = ["id", "name", "email"];
   requiredFields = ["name", "email"];
   validate = (instance: User) => {
-    // throw new ValidationError("data is wrong!");
+    // this validates the entire request body
   };
   validate_email = (email: User["email"], instance: User) => {
-    // throw new ValidationError("email is bad!");
+    // this validates individual fields
   };
 }
 
+// Step.2b extend views (optional)
 class PaginatedListView extends ListView {
   pageSize = 5;
 }
 
+// Step.3 create express endpoints to use the views
 const userListView = new PaginatedListView(UserModel);
 const userCreateView = new CreateView(UserModel);
 const userRetrieveView = new RetrieveView(UserModel);
 const userUpdateView = new UpdateView(UserModel);
 const userDestroyView = new DestroyView(UserModel);
-
 app.get("/users", userListView.get);
 app.post("/users", userCreateView.post);
 app.get("/users/:id", userRetrieveView.get);
